@@ -1,8 +1,12 @@
 package com.hoh.android.sunshyne;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,8 +15,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,14 +47,27 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // declare that this fragment has custom options menu
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         // inflate the fragment components from the layout file
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        // declare that this fragment has custom options menu
-        setHasOptionsMenu(true);
+
 
         // the fake data to start the app with
         String [] fakeData = {
@@ -61,10 +80,12 @@ public class ForecastFragment extends Fragment {
         };
 
         // create the array list for array adapter
-        ArrayList<String> dataArr = new ArrayList<>(fakeData.length);
-        for (int i = 0, l = fakeData.length; i < l; i++){
-            dataArr.add(fakeData[i]);
-        }
+        //ArrayList<String> dataArr = new ArrayList<>(fakeData.length);
+        ArrayList<String> dataArr = new ArrayList<>();
+
+//        for (int i = 0, l = fakeData.length; i < l; i++){
+//            dataArr.add(fakeData[i]);
+//        }
 
         // create the ArrayAdapter to be attached to the list View
         adapter = new ArrayAdapter(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, dataArr);
@@ -73,6 +94,19 @@ public class ForecastFragment extends Fragment {
 
         // attach the string array to the
         forecastListView.setAdapter(adapter);
+
+        forecastListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String message = adapter.getItem(position).toString();
+                Toast toast = Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT);
+                toast.show();
+
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra("dayForecast", message);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
 
@@ -85,11 +119,33 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_refresh) {
-            forecastAsyncTask = new ForecastAsyncTask();
-            forecastAsyncTask.execute("94043");
+            updateWeather();
+        }
+        else if (itemId == R.id.action_viewMap){
+            Log.i(MainActivity.class.getSimpleName(), "Clicked View Map Menu");
+            Intent mapIntent = new Intent();
+            mapIntent.setAction(Intent.ACTION_VIEW);
+            String location = getPreferredLocation();
+            mapIntent.setData(Uri.parse("geo:0,0?q=" + location));
+
+            if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null){
+                startActivity(mapIntent);
+            }
+
         }
         return super.onOptionsItemSelected(item);
     }
+
+    public void updateWeather(){
+        forecastAsyncTask = new ForecastAsyncTask();
+        forecastAsyncTask.execute(getPreferredLocation());
+    }
+
+    public String getPreferredLocation(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        return sharedPreferences.getString(getString(R.string.location_settings_key), getString(R.string.location_default_value));
+    }
+
 
     private class ForecastAsyncTask extends AsyncTask<String, Void, String[]> {
 
@@ -105,6 +161,10 @@ public class ForecastFragment extends Fragment {
         private String mode = "json";
         private String unit = "metric";
         private int count = 7;
+
+        private String preferredUnit = PreferenceManager.getDefaultSharedPreferences(getActivity())
+                                        .getString(getString(R.string.units_settings_key),
+                                                getString(R.string.units_default_value));
 
         @Override
         protected String[] doInBackground(String ... params) {
@@ -241,6 +301,12 @@ public class ForecastFragment extends Fragment {
                 date = dayForecastObject.getLong(DATE_KEY);
                 minDayTemp = dayTempJSONObject.getDouble(MIN_TEMP_KEY);
                 maxDayTemp = dayTempJSONObject.getDouble(MAX_TEMP_KEY);
+
+                if ( !preferredUnit.equalsIgnoreCase(getString(R.string.units_default_value))){
+                    minDayTemp = convertTemp(minDayTemp);
+                    maxDayTemp = convertTemp(maxDayTemp);
+                }
+
                 mainWeatherDesc = dayWeatherJSONObject.getString(MAIN_KEY);
 
                 dateStr = getReadableDateString(date);
@@ -263,6 +329,12 @@ public class ForecastFragment extends Fragment {
             return Math.round(minDayTemp) + "/" + Math.round(maxDayTemp);
 
         }
+
+        public double convertTemp(double temp){
+            return (temp + 32) * 9.0 / 5.0;
+        }
+
+
     }
 
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="units_entries">
+        <item>Metrics</item>
+        <item>Imperial</item>
+    </array>
+
+    <array name="units_entries_values">
+        <item>metric</item>
+        <item>imperial</item>
+    </array>
+</resources>
