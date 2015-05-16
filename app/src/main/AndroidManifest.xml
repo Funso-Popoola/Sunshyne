@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hoh.android.sunshyne" >
+    package="com.hoh.android.sunshyne"
+    android:installLocation="auto">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -10,6 +11,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >
@@ -35,6 +37,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.hoh.android.sunshyne.MainActivity" />
         </activity>
+
+        <provider
+            android:authorities="com.hoh.android.sunshyne"
+            android:name=".data.WeatherProvider"
+            android:enabled="true"
+            android:exported="true"/>
+
     </application>
 
 </manifest>

@@ -1,18 +1,15 @@
 package com.hoh.android.sunshyne;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends ActionBarActivity {
 
-    private ForecastFragment forecastFragment;
     private String location;
+    private String FORECAST_FRAGMENT_TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,16 +19,30 @@ public class MainActivity extends ActionBarActivity {
 
         //set the view to the main activity layout
         setContentView(R.layout.activity_main);
+        location = Utility.getPreferredLocation(this);
 
-        //add the forecast fragment only if there is no savedInstanceState
+        // add the forecast fragment only if there is no savedInstanceState
+        // no savedInstanceState means the app is just been created, not re-created
+        // hence, no fragment has been created yet
+
         if (savedInstanceState == null) {
-            forecastFragment = new ForecastFragment();
+            ForecastFragment forecastFragment = new ForecastFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, forecastFragment)
+                    .add(R.id.container, forecastFragment, FORECAST_FRAGMENT_TAG)
                     .commit();
         }
     }
 
+    @Override
+    protected void onResume() {
+        String preferredLocation = Utility.getPreferredLocation(this);
+        if (!preferredLocation.equalsIgnoreCase(location)){
+            ForecastFragment fragment = (ForecastFragment) getSupportFragmentManager().findFragmentByTag(FORECAST_FRAGMENT_TAG);
+            fragment.onLocationChanged();
+            location = preferredLocation;
+        }
+        super.onResume();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -51,22 +62,9 @@ public class MainActivity extends ActionBarActivity {
         if (id == R.id.action_settings) {
             startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
         }
-//        else if (id == R.id.action_viewMap){
-//            Log.i(MainActivity.class.getSimpleName(), "Clicked View Map Menu");
-//            Intent mapIntent = new Intent();
-//            mapIntent.setAction(Intent.ACTION_VIEW);
-//            location = forecastFragment.getPreferredLocation();
-//            mapIntent.setData(Uri.parse("geo:0,0?q=" + location));
-//
-//            if (mapIntent.resolveActivity(getPackageManager()) != null){
-//                startActivity(mapIntent);
-//            }
-//
-//        }
 
         return super.onOptionsItemSelected(item);
     }
-
 
 
 

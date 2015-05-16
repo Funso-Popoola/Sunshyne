@@ -1,17 +1,18 @@
 package com.hoh.android.sunshyne;
 
-import android.content.SharedPreferences;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
 public class SettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener{
+
+    private final static String LOG_TAG = SettingsActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +61,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
             ListPreference listPreference = (ListPreference)preference;
             int index = listPreference.findIndexOfValue(getString(R.string.units_settings_key));
             if ( index >= 0) {
+                Log.i(LOG_TAG, "The listPreference entry: " + listPreference.getEntries()[index]);
                 preference.setSummary(listPreference.getEntries()[index]);
             }
         }
